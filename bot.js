@@ -4,7 +4,6 @@ const { menuSceneSendQR } = require('./scenes/sendQR');
 const { menuSceneExportDay } = require('./scenes/exportDay');
 const { menuSceneExportYesterday } = require('./scenes/exportYesterday');
 require('dotenv').config();
-//https://api.telegram.org/bot6545961411:AAHkKugnDHNwm2FY1bo3KGPy-dEPI3yALA8/sendMessage?chat_id=535263198&text=Hello+World!
 
 // подключение бота
 const bot = new Telegraf(process.env.BOT_TOKEN);
@@ -16,7 +15,7 @@ bot.use(stage.middleware());
 bot.start(start);
 
 // взаимодействие с кнопками
-bot.action('sendQRButton', startSendQR)
+bot.on('photo', startSendQR)
 bot.action('excelYesterdayButton', startExportYesterday)
 bot.action('excelTodayButton', startExportDay)
 bot.action('backMenuButton', backMenu)

@@ -1,7 +1,7 @@
 const { mainMenu } = require('../buttons/buttons');
 
 const start = (ctx) => {
-  return ctx.reply(`Выбери действие`, {
+  return ctx.reply(`Отправь QR или выбери действие`, {
     disable_web_page_preview: true,
     parse_mode: 'HTML',
     ...mainMenu

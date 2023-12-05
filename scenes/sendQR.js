@@ -1,9 +1,10 @@
 const { Telegraf, Scenes } = require('telegraf');
 const { backMenu } = require('../controllers/commands');
-const { backButtonMenu, mainMenu } = require('../buttons/buttons');
+const { mainMenu } = require('../buttons/buttons');
 const Jimp = require("jimp");
 const { MongoClient } = require('mongodb');
 const qrCodeReader = require('qrcode-reader');
+const moment = require("moment/moment");
 
 const stepOne = Telegraf.on('photo', async ctx => {
   try {
@@ -48,7 +49,7 @@ const stepTwo = Telegraf.on('text', async ctx => {
       await ctx.reply("Вы ввели некорректное значение, повторите ввод (цифры от 1 до 20)");
     } else {
       ctx.wizard.state.data.count = ctx.message.text;
-      await ctx.reply('Введи номер маршрутного листа (без букв)');
+      await ctx.reply('Введи номер маршрутного листа (4 цифры без букв)');
       return ctx.wizard.next()
     }
   } catch (error) {
@@ -71,6 +72,8 @@ const result = Telegraf.on('text', async ctx => {
         .then(async client => {
           const db = client.db('botqrbd');
           const dataCollection = db.collection('data');
+          const date =new Date(ctx.message.date*1000);
+          const dateFormat = moment(date).format('DD.MM.YYYY HH:mm')
 
           await dataCollection.insertOne({
             userLogin: ctx.message.from.username ? ctx.message.from.username : null,
@@ -94,9 +97,7 @@ const result = Telegraf.on('text', async ctx => {
 // передаём конструктору название сцены и шаги сцен
 const menuSceneSendQR = new Scenes.WizardScene('sendQR', stepOne, stepTwo, result);
 
-menuSceneSendQR.enter(ctx => ctx.reply('Жду QR...', {
-  ...backButtonMenu
-}));
+menuSceneSendQR.enter();
 
 // вешаем прослушку hears на сцену
 menuSceneSendQR.hears('Возврат в меню', ctx => {

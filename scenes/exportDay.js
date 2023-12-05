@@ -9,7 +9,6 @@ const stepOne = Telegraf.on('photo', async ctx => {
 });
 const exportDataForDay = async (ctx) => {
   const dateToday = new Date().setUTCHours(0, 0, 0, 0).toString().substring(0, 10);
-  const bot = new Telegraf(process.env.BOT_TOKEN);
 
   MongoClient.connect(process.env.CONNECT)
     .then(async client => {
@@ -24,8 +23,10 @@ const exportDataForDay = async (ctx) => {
       mongoXlsx.mongoData2Xlsx(results, model,  {
         fileName: `tools-${moment(date).format('DD.MM.YYYY')}.xlsx`,
         path: './files',
-      },  async function (err, data) {
-        await ctx.reply("Файл сохранился на сервере");
+      },  async function (err) {
+        if (!err){
+          await ctx.reply("Файл сохранился на сервере");
+        }
       });
     });
 }
