@@ -4,8 +4,8 @@ const { Markup } = require('telegraf');
 const mainMenu = Markup.inlineKeyboard([
   [Markup.button.callback('Отправить QR', 'sendQRButton')],
   [
+    Markup.button.callback('Данные за сегодня', 'excelTodayButton'),
     Markup.button.callback('Данные за вчера', 'excelYesterdayButton'),
-    Markup.button.callback('Данные за сегодня', 'excelTodayButton')
   ]
 ])
 

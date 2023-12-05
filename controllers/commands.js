@@ -16,9 +16,11 @@ const backMenu = ctx => {
   });
 }
 const startSendQR = (ctx) => ctx.scene.enter('sendQR');
+const startExportDay = (ctx) => ctx.scene.enter('exportDay');
 
 module.exports = {
   start,
   backMenu,
-  startSendQR
+  startSendQR,
+  startExportDay
 }
