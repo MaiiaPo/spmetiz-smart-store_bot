@@ -44,9 +44,13 @@ const stepOne = Telegraf.on('photo', async ctx => {
 // второй шаг сцены
 const stepTwo = Telegraf.on('text', async ctx => {
   try {
-    ctx.wizard.state.data.count = ctx.message.text;
-    await ctx.reply('Введи номер маршрутного листа');
-    return ctx.wizard.next()
+    if (!/^\d+$/.test(ctx.message.text) || (ctx.message.text < 1 || ctx.message.text > 20)) {
+      await ctx.reply("Вы ввели некорректное значение, повторите ввод (цифры от 1 до 20)");
+    } else {
+      ctx.wizard.state.data.count = ctx.message.text;
+      await ctx.reply('Введи номер маршрутного листа (без букв)');
+      return ctx.wizard.next()
+    }
   } catch (error) {
     console.log(error)
     ctx.reply('Упс... Произошла какая - то ошибка');
@@ -56,27 +60,31 @@ const stepTwo = Telegraf.on('text', async ctx => {
 // третий шаг сцены
 const result = Telegraf.on('text', async ctx => {
   try {
-    ctx.wizard.state.data.numberList = ctx.message.text;
-    const { toolCode, count, numberList } = ctx.wizard.state.data;
+    if (!/^\d{4}$/.test(ctx.message.text)) {
+      await ctx.reply("Вы ввели некорректное значение, повторите ввод (4 цифры)");
+    } else {
+      ctx.wizard.state.data.numberList = ctx.message.text;
+      const { toolCode, count, numberList } = ctx.wizard.state.data;
 
-    // подключение БД
-    MongoClient.connect(process.env.CONNECT)
-      .then(async client => {
-        const db = client.db('botqrbd');
-        const dataCollection = db.collection('data');
+      // подключение БД
+      MongoClient.connect(process.env.CONNECT)
+        .then(async client => {
+          const db = client.db('botqrbd');
+          const dataCollection = db.collection('data');
 
-        await dataCollection.insertOne({
-          userLogin: ctx.message.from.username ? ctx.message.from.username : null,
-          userFullName: '',
-          toolCode,
-          count,
-          numberList,
-          dateTime: ctx.message.date,
-        })
-      });
+          await dataCollection.insertOne({
+            userLogin: ctx.message.from.username ? ctx.message.from.username : null,
+            userFullName: '',
+            toolCode,
+            count,
+            numberList,
+            dateTime: ctx.message.date,
+          })
+        });
 
-    await ctx.reply(`Вы взяли ${count}шт. инструмента с кодом ${toolCode} по маршрутному листу №${numberList}`, {...mainMenu})
-    return ctx.scene.leave()
+      await ctx.reply(`Вы взяли ${count} шт. инструмента с кодом ${toolCode} по маршрутному листу №${numberList}`, {...mainMenu})
+      return ctx.scene.leave()
+    }
   } catch (error) {
     console.log(error)
     ctx.reply('Упс... Произошла какая - то ошибка');
