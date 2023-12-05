@@ -2,18 +2,8 @@ const { Telegraf, Scenes } = require('telegraf');
 const { backMenu } = require('../controllers/commands');
 const { backButtonMenu, mainMenu } = require('../buttons/buttons');
 const Jimp = require("jimp");
-const jsQR = require("jsqr");
-
-async function tryParse(url) {
-  const image = await Jimp.read(url.href)
-  // a bit of preprocessing helps on QR codes with tiny details
-  image.normalize()
-  image.scale(2)
-  const value = jsQR(image.bitmap.data, image.bitmap.width, image.bitmap.height)
-  if (value) {
-    return value.data || String.fromCharCode.apply(null, value.binaryData)
-  }
-}
+const { MongoClient } = require('mongodb');
+const qrCodeReader = require('qrcode-reader');
 
 const stepOne = Telegraf.on('photo', async ctx => {
   try {
@@ -22,11 +12,29 @@ const stepOne = Telegraf.on('photo', async ctx => {
     const photos = ctx.message.photo
     const photo = photos[photos.length - 1]
     const fileId = photo.file_id
-    const url = await bot.telegram.getFileLink(fileId)
-    ctx.wizard.state.data.toolCode = await tryParse(url)
 
-    ctx.reply(`Введите количество`);
-    return ctx.wizard.next()
+    const url = await bot.telegram.getFileLink(fileId)
+    Jimp.read(url.href, function(err, image) {
+      if (err) {
+        console.error(err);
+      }
+      const qrCodeInstance = new qrCodeReader();
+      qrCodeInstance.callback = function(err, value) {
+        if (err) {
+          console.error(err);
+        }
+        if (!value.result) {
+          ctx.reply('Не удалось распознать изображение. Попробуйте еще раз');
+          return ctx.scene.enter('sendQR');
+        } else {
+          ctx.wizard.state.data.toolCode = value.result;
+          ctx.reply(`Введите количество`);
+          return ctx.wizard.next()
+        }
+      };
+      qrCodeInstance.decode(image.bitmap);
+    });
+
   } catch (error) {
     console.log(error)
     ctx.reply('Упс... Произошла какая - то ошибка');
@@ -51,15 +59,23 @@ const result = Telegraf.on('text', async ctx => {
     ctx.wizard.state.data.numberList = ctx.message.text;
     const { toolCode, count, numberList } = ctx.wizard.state.data;
 
-    // тут должна быть обработка полученных данных и вывод
-    await ctx.reply(`
-    Вы взяли ${count}шт. инструмента с кодом ${toolCode} 
-    по маршрутному листу ${numberList}
-    `, {
-      disable_web_page_preview: true,
-      parse_mode: 'HTML',
-      ...mainMenu
-    })
+    // подключение БД
+    MongoClient.connect(process.env.CONNECT)
+      .then(async client => {
+        const db = client.db('botqrbd');
+        const dataCollection = db.collection('data');
+
+        await dataCollection.insertOne({
+          userLogin: ctx.message.from.username ? ctx.message.from.username : null,
+          userFullName: '',
+          toolCode,
+          count,
+          numberList,
+          dateTime: ctx.message.date,
+        })
+      });
+
+    await ctx.reply(`Вы взяли ${count}шт. инструмента с кодом ${toolCode} по маршрутному листу №${numberList}`, {...mainMenu})
     return ctx.scene.leave()
   } catch (error) {
     console.log(error)
