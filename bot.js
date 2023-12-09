@@ -3,12 +3,13 @@ const { start, backMenu, startSendQR, startExportDay, startExportYesterday } = r
 const { menuSceneSendQR } = require('./scenes/sendQR');
 const { menuSceneExportDay } = require('./scenes/exportDay');
 const { menuSceneExportYesterday } = require('./scenes/exportYesterday');
+const { menuSceneCreateUser } = require('./scenes/createUser');
 require('dotenv').config();
 
 // подключение бота
 const bot = new Telegraf(process.env.BOT_TOKEN);
 // регистрация сцен (пример: new Scenes.Stage([menuSceneOne, menuSceneTwo, menuSceneTree]))
-const stage = new Scenes.Stage([menuSceneSendQR, menuSceneExportDay, menuSceneExportYesterday]);
+const stage = new Scenes.Stage([menuSceneSendQR, menuSceneExportDay, menuSceneExportYesterday, menuSceneCreateUser]);
 
 bot.use(session());
 bot.use(stage.middleware());

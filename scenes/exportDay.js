@@ -15,7 +15,7 @@ const exportDataForDay = async (ctx) => {
       const db = client.db('botqrbd');
       const dataCollection = db.collection('data');
 
-      const results = await dataCollection.find({dateTime: {$gte: Number(dateToday)}}).toArray();
+      const results = await dataCollection.find({"Дата": {$gte: Number(dateToday)}}).toArray();
       const model = mongoXlsx.buildDynamicModel(results);
 
       const date = new Date();

@@ -5,11 +5,28 @@ const Jimp = require("jimp");
 const { MongoClient } = require('mongodb');
 const qrCodeReader = require('qrcode-reader');
 const moment = require("moment/moment");
+const { startCreateUser } = require('../controllers/commands');
 
 const stepOne = Telegraf.on('photo', async ctx => {
   try {
     const bot = new Telegraf(process.env.BOT_TOKEN);
     ctx.wizard.state.data = {}; // стейт для хранения введенных пользователем данных
+
+    // Проверка, есть ли пользователь в базе
+    // если нет, то надо создать
+    // подключение БД
+    MongoClient.connect(process.env.CONNECT)
+      .then(async client => {
+        const db = client.db('botqrbd');
+        const dataCollection = db.collection('users');
+
+        const findUser = await dataCollection.find({userId: ctx.message.from.id}).toArray();
+        if (findUser.length === 0) {
+          startCreateUser();
+          ctx.scene.leave();
+        }
+      });
+
     const photos = ctx.message.photo
     const photo = photos[photos.length - 1]
     const fileId = photo.file_id
@@ -76,12 +93,12 @@ const result = Telegraf.on('text', async ctx => {
           const dateFormat = moment(date).format('DD.MM.YYYY HH:mm')
 
           await dataCollection.insertOne({
-            userLogin: ctx.message.from.username ? ctx.message.from.username : null,
-            userFullName: '',
-            toolCode,
-            count,
-            numberList,
-            dateTime: ctx.message.date,
+            "Логин": ctx.message.from.username ? ctx.message.from.username : null,
+            "Имя пользователя": '',
+            "Код инструмента": toolCode,
+            "Количество": count,
+            "Номер маршрутного листа": numberList,
+            "Дата": ctx.message.date,
           })
         });
 
