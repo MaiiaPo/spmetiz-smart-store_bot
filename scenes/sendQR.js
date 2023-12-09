@@ -18,12 +18,14 @@ const stepOne = Telegraf.on('photo', async ctx => {
     MongoClient.connect(process.env.CONNECT)
       .then(async client => {
         const db = client.db('botqrbd');
-        const dataCollection = db.collection('users');
+        const userCollection = db.collection('users');
 
-        const findUser = await dataCollection.find({userId: ctx.message.from.id}).toArray();
+        const findUser = await userCollection.find({userId: ctx.message.from.id}).toArray();
         if (findUser.length === 0) {
           startCreateUser();
           ctx.scene.leave();
+        } else {
+          ctx.wizard.state.data.userName = findUser[0].userFullName;
         }
       });
 
@@ -46,7 +48,7 @@ const stepOne = Telegraf.on('photo', async ctx => {
           return ctx.scene.enter('sendQR');
         } else {
           ctx.wizard.state.data.toolCode = value.result;
-          ctx.reply(`Введите количество`);
+          ctx.reply(`Введи количество`);
           return ctx.wizard.next()
         }
       };
@@ -63,7 +65,7 @@ const stepOne = Telegraf.on('photo', async ctx => {
 const stepTwo = Telegraf.on('text', async ctx => {
   try {
     if (!/^\d+$/.test(ctx.message.text) || (ctx.message.text < 1 || ctx.message.text > 20)) {
-      await ctx.reply("Вы ввели некорректное значение, повторите ввод (цифры от 1 до 20)");
+      await ctx.reply("Введено некорректное значение, повтори ввод (цифры от 1 до 20)");
     } else {
       ctx.wizard.state.data.count = ctx.message.text;
       await ctx.reply('Введи номер маршрутного листа (4 цифры без букв)');
@@ -79,30 +81,31 @@ const stepTwo = Telegraf.on('text', async ctx => {
 const result = Telegraf.on('text', async ctx => {
   try {
     if (!/^\d{4}$/.test(ctx.message.text)) {
-      await ctx.reply("Вы ввели некорректное значение, повторите ввод (4 цифры)");
+      await ctx.reply("Введено некорректное значение, повтори ввод (4 цифры)");
     } else {
       ctx.wizard.state.data.numberList = ctx.message.text;
-      const { toolCode, count, numberList } = ctx.wizard.state.data;
+      const { toolCode, count, numberList, userName } = ctx.wizard.state.data;
 
       // подключение БД
       MongoClient.connect(process.env.CONNECT)
         .then(async client => {
           const db = client.db('botqrbd');
           const dataCollection = db.collection('data');
+
           const date =new Date(ctx.message.date*1000);
-          const dateFormat = moment(date).format('DD.MM.YYYY HH:mm')
+          const dateFormat = moment(date).format('DD.MM.YYYY HH:MM');
 
           await dataCollection.insertOne({
             "Логин": ctx.message.from.username ? ctx.message.from.username : null,
-            "Имя пользователя": '',
+            "Имя пользователя": userName,
             "Код инструмента": toolCode,
             "Количество": count,
             "Номер маршрутного листа": numberList,
-            "Дата": ctx.message.date,
+            "Дата": dateFormat,
           })
         });
 
-      await ctx.reply(`Вы взяли ${count} шт. инструмента с кодом ${toolCode} по маршрутному листу №${numberList}`, {...mainMenu})
+      await ctx.reply(`Взято ${count} шт. инструмента с кодом ${toolCode} по маршрутному листу №${numberList}`, {...mainMenu})
       return ctx.scene.leave()
     }
   } catch (error) {

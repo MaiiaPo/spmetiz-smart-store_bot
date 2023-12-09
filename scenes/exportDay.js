@@ -8,20 +8,19 @@ const stepOne = Telegraf.on('photo', async ctx => {
   return ctx.wizard.next()
 });
 const exportDataForDay = async (ctx) => {
-  const dateToday = new Date().setUTCHours(0, 0, 0, 0).toString().substring(0, 10);
-
   MongoClient.connect(process.env.CONNECT)
     .then(async client => {
       const db = client.db('botqrbd');
       const dataCollection = db.collection('data');
 
-      const results = await dataCollection.find({"Дата": {$gte: Number(dateToday)}}).toArray();
+      const dateToday = new Date();
+      const dateFormat = moment(dateToday).format('DD.MM.YYYY');
+
+      const results = await dataCollection.find({"Дата": {$regex: dateFormat}}).toArray();
       const model = mongoXlsx.buildDynamicModel(results);
 
-      const date = new Date();
-
       mongoXlsx.mongoData2Xlsx(results, model,  {
-        fileName: `tools-${moment(date).format('DD.MM.YYYY')}.xlsx`,
+        fileName: `tools-${moment(dateToday).format('DD.MM.YYYY')}.xlsx`,
         path: './files',
       },  async function (err) {
         if (!err){

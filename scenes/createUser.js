@@ -1,6 +1,5 @@
 const { Telegraf, Scenes } = require('telegraf');
 const { backMenu } = require('../controllers/commands');
-const { mainMenu } = require('../buttons/buttons');
 const { MongoClient } = require('mongodb');
 
 const stepOne = Telegraf.on('text', async ctx => {
@@ -9,9 +8,9 @@ const stepOne = Telegraf.on('text', async ctx => {
     MongoClient.connect(process.env.CONNECT)
       .then(async client => {
         const db = client.db('botqrbd');
-        const dataCollection = db.collection('users');
+        const userCollection = db.collection('users');
 
-        await dataCollection.insertOne({
+        await userCollection.insertOne({
           "userId": ctx.message.from.id,
           "userFullName": ctx.message.text,
         })
