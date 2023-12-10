@@ -6,11 +6,15 @@ const moment = require("moment");
 const {backButtonMenu} = require("../buttons/buttons");
 
 const stepOne = Telegraf.on('text', async ctx => {
-  if (moment(ctx.message.text).isSameOrBefore( '08.12.2023')
-  || !/[0-9]{2}.[0-9]{2}.[0-9]{4}/.test(ctx.message.text)) {
-    await ctx.reply("Введено некорректное значение");
+  if (!/[0-9]{2}.[0-9]{2}.[0-9]{4}/.test(ctx.message.text)) {
+    await ctx.reply("Введена некорректная дата");
     return ctx.scene.enter('exportDay');
   }
+  if (moment(ctx.message.text).isSameOrBefore( '08.12.2023')) {
+    await ctx.reply("Дата не может быть ранее 11.12.2023");
+    return ctx.scene.enter('exportDay');
+  }
+
   MongoClient.connect(process.env.CONNECT)
     .then(async client => {
       const db = client.db('botqrbd');
