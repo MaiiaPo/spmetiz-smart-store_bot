@@ -2,16 +2,14 @@ const { Markup } = require('telegraf');
 
 // основное меню
 const mainMenu = Markup.inlineKeyboard([
-  [
-    Markup.button.callback('Данные за сегодня', 'excelTodayButton'),
-    Markup.button.callback('Данные за вчера', 'excelYesterdayButton'),
-  ]
+  [Markup.button.callback('Получить данные', 'excelDayButton')],
+  [Markup.button.callback('Возврат в меню', 'backMenuButton')],
 ])
 
 // возврат
 const backButtonMenu =
   Markup.inlineKeyboard([
-    Markup.button.callback('Возврат в основное меню', 'backMenuButton'),
+    Markup.button.callback('Возврат в меню', 'backMenuButton'),
   ])
 
 

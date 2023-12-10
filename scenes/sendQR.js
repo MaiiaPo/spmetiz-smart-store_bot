@@ -1,6 +1,6 @@
 const { Telegraf, Scenes } = require('telegraf');
 const { backMenu } = require('../controllers/commands');
-const { mainMenu } = require('../buttons/buttons');
+const { backButtonMenu } = require('../buttons/buttons');
 const Jimp = require("jimp");
 const { MongoClient } = require('mongodb');
 const qrCodeReader = require('qrcode-reader');
@@ -105,8 +105,7 @@ const result = Telegraf.on('text', async ctx => {
           })
         });
 
-      await ctx.reply(`Взято ${count} шт. инструмента с кодом ${toolCode} по маршрутному листу №${numberList}`, {...mainMenu})
-      return ctx.scene.leave()
+      await ctx.reply(`Взято ${count} шт. инструмента с кодом ${toolCode} по маршрутному листу №${numberList}`, {...backButtonMenu})
     }
   } catch (error) {
     console.log(error)
