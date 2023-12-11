@@ -5,7 +5,6 @@ const Jimp = require("jimp");
 const { MongoClient } = require('mongodb');
 const qrCodeReader = require('qrcode-reader');
 const moment = require("moment/moment");
-const { startCreateUser } = require('../controllers/commands');
 
 const stepOne = Telegraf.on('photo', async ctx => {
   try {
@@ -22,39 +21,38 @@ const stepOne = Telegraf.on('photo', async ctx => {
 
         const findUser = await userCollection.find({userId: ctx.message.from.id}).toArray();
         if (findUser.length === 0) {
-          startCreateUser();
+          ctx.scene.enter('createUser');
           ctx.scene.leave();
         } else {
           ctx.wizard.state.data.userName = findUser[0].userFullName;
+
+          const photos = ctx.message.photo
+          const photo = photos[photos.length - 1]
+          const fileId = photo.file_id
+
+          const url = await bot.telegram.getFileLink(fileId)
+          Jimp.read(url.href, function(err, image) {
+            if (err) {
+              console.error(err);
+            }
+            const qrCodeInstance = new qrCodeReader();
+            qrCodeInstance.callback = function(err, value) {
+              if (err) {
+                console.error(err);
+              }
+              if (!value.result) {
+                ctx.reply('Не удалось распознать изображение. Попробуйте еще раз');
+                return ctx.scene.enter('sendQR');
+              } else {
+                ctx.wizard.state.data.toolCode = value.result;
+                ctx.reply(`Введи количество`);
+                return ctx.wizard.next()
+              }
+            };
+            qrCodeInstance.decode(image.bitmap);
+          });
         }
       });
-
-    const photos = ctx.message.photo
-    const photo = photos[photos.length - 1]
-    const fileId = photo.file_id
-
-    const url = await bot.telegram.getFileLink(fileId)
-    Jimp.read(url.href, function(err, image) {
-      if (err) {
-        console.error(err);
-      }
-      const qrCodeInstance = new qrCodeReader();
-      qrCodeInstance.callback = function(err, value) {
-        if (err) {
-          console.error(err);
-        }
-        if (!value.result) {
-          ctx.reply('Не удалось распознать изображение. Попробуйте еще раз');
-          return ctx.scene.enter('sendQR');
-        } else {
-          ctx.wizard.state.data.toolCode = value.result;
-          ctx.reply(`Введи количество`);
-          return ctx.wizard.next()
-        }
-      };
-      qrCodeInstance.decode(image.bitmap);
-    });
-
   } catch (error) {
     console.log(error)
     ctx.reply('Упс... Произошла какая - то ошибка');

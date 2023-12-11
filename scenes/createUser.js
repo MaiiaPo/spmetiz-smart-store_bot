@@ -1,6 +1,7 @@
 const { Telegraf, Scenes } = require('telegraf');
 const { backMenu } = require('../controllers/commands');
 const { MongoClient } = require('mongodb');
+const { backButtonMenu } = require("../buttons/buttons");
 
 const stepOne = Telegraf.on('text', async ctx => {
   try {
@@ -15,7 +16,7 @@ const stepOne = Telegraf.on('text', async ctx => {
           "userFullName": ctx.message.text,
         })
       });
-    await ctx.reply(`Спасибо, вы зарегистрированы`, {...backMenu})
+    await ctx.reply(`Спасибо, вы зарегистрированы`, {...backButtonMenu})
     return ctx.scene.leave()
 
   } catch (error) {
