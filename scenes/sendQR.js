@@ -38,11 +38,10 @@ const stepOne = Telegraf.on('photo', async ctx => {
             const qrCodeInstance = new qrCodeReader();
             qrCodeInstance.callback = function(err, value) {
               if (err) {
-                console.error(err);
+                return ctx.reply('Не удалось распознать изображение. Попробуйте еще раз', {...backButtonMenu});
               }
-              if (!value.result) {
-                ctx.reply('Не удалось распознать изображение. Попробуйте еще раз');
-                return ctx.scene.enter('sendQR');
+              if (!value && !value.result) {
+                return ctx.reply('Не удалось распознать изображение. Попробуйте еще раз', {...backButtonMenu});
               } else {
                 ctx.wizard.state.data.toolCode = value.result;
                 ctx.reply(`Введи количество`);

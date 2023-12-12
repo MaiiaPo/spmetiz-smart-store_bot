@@ -16,7 +16,7 @@ const stepOne = Telegraf.on('text', async ctx => {
           "userFullName": ctx.message.text,
         })
       });
-    await ctx.reply(`Спасибо, вы зарегистрированы`, {...backButtonMenu})
+    await ctx.reply(`Спасибо, вы зарегистрированы, вернитесь в основное меню`, {...backButtonMenu})
     return ctx.scene.leave()
 
   } catch (error) {
